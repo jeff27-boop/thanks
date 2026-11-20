@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Thankful Tree 🍁</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Trebuchet MS",Arial,sans-serif;background:#fff8ed;color:#633c28}
+header{text-align:center;padding:18px}
+h1{font-size:clamp(25px,4vw,44px);margin:5px;color:#a94425}
+.subtitle{color:#9b7359;font-size:16px}
+#teacher{display:block}
+.board{position:relative;width:100%;height:min(72vh,720px);min-height:480px;overflow:hidden;background:linear-gradient(#fffaf1,#f9ead4);border-radius:22px;border:2px solid #ead6b9;margin:auto}
+.tree{position:absolute;width:100%;height:100%;inset:0}
+.leaf{position:absolute;width:112px;min-height:64px;padding:10px 9px;border-radius:65% 5% 65% 5%;transform:rotate(-20deg);display:flex;align-items:center;justify-content:center;text-align:center;color:white;font-size:12px;font-weight:bold;line-height:1.2;overflow-wrap:anywhere;box-shadow:2px 4px 7px #57321c35;border:1px solid #ffffff55;animation:grow .7s ease;z-index:2}
+.leaf span{transform:rotate(20deg);max-height:65px;overflow:hidden}
+@keyframes grow{from{opacity:0;scale:.2}to{opacity:1;scale:1}}
+.qr-panel{position:fixed;right:20px;bottom:20px;width:180px;background:white;border:2px solid #ead6b9;border-radius:18px;padding:12px;text-align:center;box-shadow:0 4px 18px #0002;z-index:10}
+#qrcode{display:flex;justify-content:center;margin:8px auto}
+#qrcode img{max-width:125px}
+.qr-panel p{font-size:12px;margin:5px}
+#student{display:none;max-width:520px;margin:35px auto;padding:25px;background:white;border-radius:24px;box-shadow:0 8px 30px #70431b20}
+#student h2{text-align:center;color:#a94425;font-size:30px}
+#student p{text-align:center;color:#94725b}
+textarea{width:100%;min-height:130px;resize:vertical;border:2px solid #e6c8a5;border-radius:15px;padding:16px;font-size:20px;font-family:inherit;outline:none}
+textarea:focus{border-color:#d47739}
+button{cursor:pointer;border:none;border-radius:12px;padding:13px 18px;font-size:16px;font-weight:bold;font-family:inherit}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.actions button{flex:1}
+.translate{background:#f8e2c5;color:#79451f}
+.submit{background:#b84d2d;color:white;width:100%;margin-top:14px;padding:17px}
+.switch{background:#fff0dc;color:#a34c2c;width:100%;margin-bottom:12px}
+#direction{text-align:center;font-size:14px;margin:12px;color:#9b7359}
+#status{text-align:center;margin-top:14px;font-weight:bold;min-height:24px}
+#preview{padding:12px;background:#fff6e9;border-radius:12px;margin-top:12px;overflow-wrap:anywhere}
+.counter{text-align:center;padding:12px;font-weight:bold;color:#a34c2c}
+@media(max-width:600px){
+ .board{height:75vh;min-height:440px}
+ .leaf{width:85px;min-height:53px;font-size:10px}
+ .qr-panel{position:static;width:150px;margin:12px auto}
+ #student{margin:15px;padding:20px}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>🍁 Our Thankful Tree 🍁</h1>
+<div class="subtitle">Every leaf represents something we are thankful for.</div>
+</header>
+
+<div id="teacher">
+ <div class="board" id="board">
+  <svg class="tree" viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet">
+   <defs><linearGradient id="wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#754326"/><stop offset="50%" stop-color="#a56b3e"/><stop offset="100%" stop-color="#62351f"/></linearGradient></defs>
+   <path d="M475 650 Q490 530 460 440 Q420 350 350 260 Q300 205 230 180 M460 440 Q510 340 540 245 Q565 175 650 125 M475 470 Q400 390 320 365 Q240 330 170 340 M500 440 Q590 350 700 300 Q790 250 850 180 M490 530 Q580 480 660 450 Q760 400 820 350 M440 350 Q420 260 430 170 Q440 110 400 70 M540 250 Q600 210 710 205 Q790 190 900 110" fill="none" stroke="url(#wood)" stroke-width="25" stroke-linecap="round"/>
+   <g stroke="#98613a" stroke-width="8" stroke-linecap="round" fill="none">
+    <path d="M350 260 Q310 180 290 100"/><path d="M230 180 Q190 130 120 120"/><path d="M540 245 Q510 160 540 80"/><path d="M650 125 Q700 75 760 65"/><path d="M700 300 Q760 330 900 290"/><path d="M320 365 Q250 420 140 430"/><path d="M660 450 Q720 500 830 510"/><path d="M430 170 Q380 120 350 50"/>
+   </g>
+  </svg>
+  <div id="leaves"></div>
+ </div>
+ <div class="counter">🍂 <span id="count">0</span> thankful leaves on our tree!</div>
+ <div class="qr-panel">
+  <strong>JOIN OUR TREE!</strong>
+  <div id="qrcode"></div>
+  <p>Scan the QR code using your iPad.</p>
+  <small>Share what you are thankful for!</small>
+ </div>
+</div>
+
+<div id="student">
+ <h2>🍁 What Are You Thankful For?</h2>
+ <p>Share something that makes you feel grateful.</p>
+ <div id="direction">Translation: Chinese → English</div>
+ <button class="switch" onclick="reverseDirection()">🔄 Reverse Translation</button>
+ <textarea id="answer" placeholder="我感謝我的家人，因為他們愛我。"></textarea>
+ <div class="actions">
+  <button class="translate" onclick="translateAnswer()">🌐 Translate</button>
+  <button class="translate" onclick="clearTranslation()">↩ Reset</button>
+ </div>
+ <div id="preview"><strong>Translation preview:</strong><div id="translated">Your translation will appear here.</div></div>
+ <button class="submit" onclick="submitAnswer()">🍁 Add My Leaf to the Tree!</button>
+ <div id="status"></div>
+</div>
+
+<script>
+// IMPORTANT: Replace the placeholder values below with your Firebase web-app config.
+const firebaseConfig = {
+ apiKey:"YOUR_API_KEY",
+ authDomain:"YOUR_PROJECT.firebaseapp.com",
+ databaseURL:"YOUR_DATABASE_URL",
+ projectId:"YOUR_PROJECT_ID",
+ storageBucket:"YOUR_PROJECT.appspot.com",
+ messagingSenderId:"YOUR_SENDER_ID",
+ appId:"YOUR_APP_ID"
+};
+
+let db = null;
+let responsesRef = null;
+let firebaseReady = false;
+
+try {
+ if (firebaseConfig.apiKey !== "YOUR_API_KEY" &&
+     firebaseConfig.databaseURL !== "YOUR_DATABASE_URL") {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  responsesRef = db.ref("thanksgivingTree/responses");
+  firebaseReady = true;
+ }
+} catch(e) { console.error("Firebase setup error:",e); }
+
+const params = new URLSearchParams(location.search);
+const isStudent = params.get("mode")==="student";
+
+if(isStudent){
+ document.getElementById("teacher").style.display="none";
+ document.querySelector("header").style.display="none";
+ document.getElementById("student").style.display="block";
+}else{
+ document.getElementById("teacher").style.display="block";
+ const studentURL=location.origin+location.pathname+"?mode=student";
+ if(location.protocol!=="file:" && typeof QRCode!=="undefined"){
+  new QRCode(document.getElementById("qrcode"),{text:studentURL,width:125,height:125,colorDark:"#66391f",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});
+ }else{
+  document.getElementById("qrcode").textContent="Upload this file to a web host to create your student QR code.";
+ }
+ if(firebaseReady) listenForResponses();
+ else document.getElementById("count").textContent="Firebase setup needed";
+}
+
+let chineseToEnglish=true;
+let currentTranslation="";
+
+function reverseDirection(){
+ chineseToEnglish=!chineseToEnglish;
+ document.getElementById("direction").textContent=chineseToEnglish?"Translation: Traditional Chinese → English":"Translation: English → Traditional Chinese";
+ currentTranslation="";
+ document.getElementById("translated").textContent="Enter your answer and translate again.";
+}
+async function translateAnswer(){
+ const input=document.getElementById("answer").value.trim();
+ if(!input){alert("Please type your answer first!");return;}
+ const from=chineseToEnglish?"zh-TW":"en";
+ const to=chineseToEnglish?"en":"zh-TW";
+ document.getElementById("translated").textContent="Translating...";
+ try{
+  const url="https://api.mymemory.translated.net/get?q="+encodeURIComponent(input)+"&langpair="+from+"|"+to;
+  const response=await fetch(url);
+  const data=await response.json();
+  if(data.responseStatus!==200) throw new Error("Translation failed");
+  currentTranslation=data.responseData.translatedText;
+  document.getElementById("translated").textContent=currentTranslation;
+ }catch(e){
+  document.getElementById("translated").textContent="Translation unavailable. Please try again.";
+ }
+}
+function clearTranslation(){
+ currentTranslation="";
+ document.getElementById("translated").textContent="Your translation will appear here.";
+}
+async function submitAnswer(){
+ const original=document.getElementById("answer").value.trim();
+ const status=document.getElementById("status");
+ if(!original){status.textContent="Please write your answer first!";return;}
+ if(!firebaseReady){status.textContent="This board is not connected yet. The teacher needs to finish Firebase setup.";return;}
+ const finalAnswer=currentTranslation||original;
+ status.textContent="Adding your leaf...";
+ try{
+  await responsesRef.push({
+   original:original,translation:finalAnswer,
+   direction:chineseToEnglish?"zh-en":"en-zh",
+   timestamp:firebase.database.ServerValue.TIMESTAMP
+  });
+  document.getElementById("answer").value="";
+  currentTranslation="";
+  document.getElementById("translated").textContent="Your translation will appear here.";
+  status.textContent="🍁 Your leaf has been added to our Thankful Tree!";
+ }catch(e){status.textContent="Unable to submit. Please check your connection.";}
+}
+
+const colors=["#B52D25","#C74627","#D65B26","#E07829","#EA8A32","#A93626","#CC4D34","#D96B3D","#B95C24","#E39A42","#C53A2B","#F09A45"];
+const positions=[[22,17],[38,10],[54,14],[70,12],[12,28],[29,27],[47,25],[65,27],[81,29],[18,42],[35,39],[53,40],[73,43],[87,45],[9,55],[27,53],[44,55],[63,54],[81,57],[35,17],[60,18],[25,35],[58,33],[76,36],[14,67],[33,66],[54,67],[73,68]];
+
+function createLeaf(item,index){
+ const leaf=document.createElement("div");
+ leaf.className="leaf";
+ const pos=positions[index%positions.length];
+ const extraRow=Math.floor(index/positions.length);
+ leaf.style.left=Math.min(88,pos[0]+(extraRow%2)*3)+"%";
+ leaf.style.top=Math.min(82,pos[1]+extraRow*7)+"%";
+ leaf.style.background=colors[index%colors.length];
+ const span=document.createElement("span");
+ span.textContent=item.translation||item.original||"Thankful";
+ leaf.appendChild(span);
+ leaf.title=item.original===item.translation?item.original:(item.original+" → "+item.translation);
+ document.getElementById("leaves").appendChild(leaf);
+}
+function listenForResponses(){
+ responsesRef.on("value",snapshot=>{
+  const leaves=document.getElementById("leaves");
+  leaves.innerHTML="";
+  const data=snapshot.val();
+  if(!data){document.getElementById("count").textContent="0";return;}
+  const entries=Object.values(data);
+  entries.forEach((item,index)=>createLeaf(item,index));
+  document.getElementById("count").textContent=entries.length;
+ });
+}
+</script>
+</body>
+</html>
